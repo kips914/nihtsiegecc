@@ -1,0 +1,42 @@
+name: Build Minecraft Mod
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+  workflow_dispatch: # Позволяет запускать сборку вручную кнопкой
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17' # Измените на '21', если ваш мод для версий Minecraft 1.20.5+
+        distribution: 'temurin'
+
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@v4
+
+    - name: Build with Gradle
+      # Используем системный gradle, так как файла ./gradlew в репозитории нет
+      run: gradle build
+
+    - name: Find Created JARs (Debug)
+      # Этот шаг покажет в логах, куда именно gradle положил готовые файлы
+      run: find . -name "*.jar" -type f
+
+    - name: Upload Build Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: mod-jar
+        # Поиск jar-файлов в любых подпапках build/libs
+        path: "**/build/libs/*.jar"
+        # Если файлы не найдутся, сборка выдаст ошибку (так мы сразу узнаем о проблеме)
+        if-no-files-found: error
